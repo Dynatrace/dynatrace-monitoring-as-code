@@ -18,13 +18,16 @@ package loader
 
 import (
 	"fmt"
+
+	"github.com/spf13/afero"
+	"gopkg.in/yaml.v2"
+
+	"github.com/dynatrace/dynatrace-configuration-as-code/v2/internal/featureflags"
 	"github.com/dynatrace/dynatrace-configuration-as-code/v2/internal/files"
 	"github.com/dynatrace/dynatrace-configuration-as-code/v2/internal/log"
 	"github.com/dynatrace/dynatrace-configuration-as-code/v2/internal/log/field"
 	"github.com/dynatrace/dynatrace-configuration-as-code/v2/pkg/account"
 	persistence "github.com/dynatrace/dynatrace-configuration-as-code/v2/pkg/persistence/account/internal/types"
-	"github.com/spf13/afero"
-	"gopkg.in/yaml.v2"
 )
 
 // Load loads account management resources from YAML configuration files
@@ -53,14 +56,15 @@ func HasAnyAccountKeyDefined(m map[string]any) bool {
 		return false
 	}
 
-	return m[persistence.KeyUsers] != nil || m[persistence.KeyGroups] != nil || m[persistence.KeyPolicies] != nil
+	return m[persistence.KeyUsers] != nil || m[persistence.KeyServiceUsers] != nil || m[persistence.KeyGroups] != nil || m[persistence.KeyPolicies] != nil
 }
 
 func load(fs afero.Fs, rootPath string) (*persistence.Resources, error) {
 	resources := &persistence.Resources{
-		Policies: make(map[string]persistence.Policy),
-		Groups:   make(map[string]persistence.Group),
-		Users:    make(map[string]persistence.User),
+		Policies:     make(map[string]persistence.Policy),
+		Groups:       make(map[string]persistence.Group),
+		Users:        make(map[string]persistence.User),
+		ServiceUsers: make(map[string]persistence.ServiceUser),
 	}
 
 	yamlFilePaths, err := files.FindYamlFiles(fs, rootPath)
@@ -134,6 +138,18 @@ func load(fs afero.Fs, rootPath string) (*persistence.Resources, error) {
 			}
 			resources.Users[u.Email.Value()] = u
 		}
+
+		if featureflags.ServiceUsers.Enabled() {
+			for _, su := range res.ServiceUsers {
+				if err := validateServiceUser(su); err != nil {
+					return nil, fmt.Errorf("error in file %q: %w", yamlFilePath, err)
+				}
+				if _, exists := resources.ServiceUsers[su.Name]; exists {
+					return nil, fmt.Errorf("found duplicate service user with name %q", su.Name)
+				}
+				resources.ServiceUsers[su.Name] = su
+			}
+		}
 	}
 	return resources, nil
 }
@@ -166,9 +182,10 @@ func transform(resources *persistence.Resources) *account.Resources {
 	}
 
 	inMemResources := account.Resources{
-		Policies: make(map[account.PolicyId]account.Policy),
-		Groups:   make(map[account.GroupId]account.Group),
-		Users:    make(map[account.UserId]account.User),
+		Policies:     make(map[account.PolicyId]account.Policy),
+		Groups:       make(map[account.GroupId]account.Group),
+		Users:        make(map[account.UserId]account.User),
+		ServiceUsers: make(map[account.UserId]account.ServiceUser),
 	}
 	for id, v := range resources.Policies {
 		inMemResources.Policies[id] = account.Policy{
@@ -219,6 +236,14 @@ func transform(resources *persistence.Resources) *account.Resources {
 		inMemResources.Users[id] = account.User{
 			Email:  v.Email,
 			Groups: transformRefs(v.Groups),
+		}
+	}
+
+	for id, su := range resources.ServiceUsers {
+		inMemResources.ServiceUsers[id] = account.ServiceUser{
+			Name:        su.Name,
+			Description: su.Description,
+			Groups:      transformRefs(su.Groups),
 		}
 	}
 	return &inMemResources

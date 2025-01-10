@@ -19,6 +19,7 @@ package loader
 import (
 	"errors"
 	"fmt"
+
 	"github.com/dynatrace/dynatrace-configuration-as-code/v2/pkg/persistence/account/internal/types"
 )
 
@@ -85,6 +86,13 @@ func policyExists(a *types.Resources, id string) bool {
 func validateUser(u types.User) error {
 	if u.Email == "" {
 		return errors.New("missing required field 'email' for user")
+	}
+	return nil
+}
+
+func validateServiceUser(su types.ServiceUser) error {
+	if su.Name == "" {
+		return errors.New("missing required field 'name' for service user")
 	}
 	return nil
 }
