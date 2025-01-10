@@ -1,4 +1,4 @@
-podTemplate(yamlFile: '.ci/jenkins_agents/ca-jenkins-agent.yaml'
+podTemplate(yamlFile: '.ci/jenkins_agents/build-agent.yaml'
 ) {
     node(POD_LABEL) {
         stage("HELLO") {
