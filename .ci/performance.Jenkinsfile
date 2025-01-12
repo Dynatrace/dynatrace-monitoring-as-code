@@ -4,15 +4,20 @@ kind: Pod
 spec:
   containers:
     - name: monaco-build
-      image: golang:latest
-      imagePullPolicy: IfNotPresent
+      image: eclipse-temurin:23-jre
+      imagePullPolicy: Always
+      command:
+      - cat
+      tty: true
       resources:
         requests:
           cpu: "100m"
-          memory: "1Gi"
+          memory: "100Mi"
         limits:
           cpu: "2"
           memory: "16Gi"
+  securityContext:
+    runAsUser: 1000
 '''
 ) {
     node(POD_LABEL) {
@@ -21,4 +26,3 @@ spec:
         }
     }
 }
-
