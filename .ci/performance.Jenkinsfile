@@ -3,5 +3,10 @@ podTemplate(yaml: readTrusted('.ci/jenkins_agents/build-agent.yaml')) {
         stage("HELLO") {
             echo "hello world"
         }
+        stage("try GO") {
+            container("monaco-build") {
+                sh 'go version'
+            }
+        }
     }
 }
