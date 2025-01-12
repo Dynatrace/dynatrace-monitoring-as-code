@@ -4,7 +4,7 @@ kind: Pod
 spec:
   containers:
     - name: monaco-build
-      image: eclipse-temurin:23-jre
+      image: golang
       imagePullPolicy: Always
       command:
       - cat
