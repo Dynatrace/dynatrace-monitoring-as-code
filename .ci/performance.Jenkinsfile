@@ -3,15 +3,19 @@ podTemplate(yaml: readTrusted('.ci/jenkins_agents/build-agent.yaml')) {
         stage("HELLO") {
             echo "hello world"
             sh '''
-                go version
+                pwd
             '''
         }
         stage("try GO") {
             container("monaco-build") {
                 checkout scm
-//                 dir('a-child-repo') {
-//                     git branch: 'main', url: 'https://bitbucket.lab.dynatrace.org/scm/claus/monaco-test-data.git'
-//                 }
+                echo "done"
+                dir('a-child-repo') {
+                    sh 'pwd'
+                    git credentialsId: 'bitbucket-buildmaster',
+                        url: 'git@bitbucket.lab.dynatrace.org/claus/monaco-test-data.git',
+                        branch: 'main'
+                }
                 sh '''
                     pwd
                     ls -alF
