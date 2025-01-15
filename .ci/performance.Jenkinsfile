@@ -13,8 +13,12 @@ podTemplate(yaml: readTrusted('.ci/jenkins_agents/build-agent.yaml')) {
                 dir('a-child-repo') {
                     sh 'pwd'
                     git credentialsId: 'bitbucket-buildmaster',
-                        url: 'git@bitbucket.lab.dynatrace.org/claus/monaco-test-data.git',
+                        url: 'https://bitbucket.lab.dynatrace.org/scm/claus/monaco-test-data.git',
                         branch: 'main'
+                        sh '''
+                            pwd
+                            ls -alF
+                        '''
                 }
                 sh '''
                     pwd
