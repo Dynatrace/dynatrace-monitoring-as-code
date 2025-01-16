@@ -3,22 +3,22 @@ podTemplate(yaml: readTrusted('.ci/jenkins_agents/build-agent.yaml')) {
         stage("HELLO") {
             echo "hello world"
             sh '''
-                pwd
+                apt install make
             '''
         }
-        stage("try GO") {
+        stage("🏗️ building") {
             container("monaco-build") {
-                checkout scm
                 echo "done"
-                dir('a-child-repo') {
-                    sh 'pwd'
-                    git credentialsId: 'bitbucket-buildmaster',
-                        url: 'https://bitbucket.lab.dynatrace.org/scm/claus/monaco-test-data.git',
-                        branch: 'main'
-                        sh '''
-                            pwd
-                            ls -alF
-                        '''
+                dir('/tmp/source') {
+                    checkout scm
+//                     git credentialsId: 'bitbucket-buildmaster',
+//                         url: 'https://bitbucket.lab.dynatrace.org/scm/claus/monaco-test-data.git',
+//                         branch: 'main'
+                    sh '''
+                        pwd
+                        ls -alF
+                    '''
+                    deleteDir()
                 }
                 sh '''
                     pwd
