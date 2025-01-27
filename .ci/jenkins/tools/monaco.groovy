@@ -46,6 +46,7 @@ void purge() {
 void deploy(String project, boolean ignoreReturnStatus = true) {
     String monacoBin = "${JENKINS_AGENT_WORKDIR}/monaco"
     withVault(vaultSecrets: secrets) {
+        // to provoke memory leak remove MONACO_CONCURENT_DEPLOYMENT flag. The default value is MONACO_CONCURENT_DEPLOYMENT=100
         status = sh(label: "monaco deploy",
             returnStatus: true,
             script: " ${monacoBin} deploy manifest.yaml --project=${project}")
