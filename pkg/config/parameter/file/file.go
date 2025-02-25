@@ -90,7 +90,7 @@ func parseFileValueParameter(context parameter.ParameterParserContext) (paramete
 
 	references, ok := context.Value["references"]
 	if !ok {
-		return &FileParameter{Fs: context.Fs, Path: strings.ToString((path)), Escaped: escaped}, nil
+		return &FileParameter{Fs: context.Fs, Path: strings.ToString(path), Escaped: escaped}, nil
 	}
 
 	referencedParameterSlice, ok := references.([]interface{})
@@ -103,7 +103,7 @@ func parseFileValueParameter(context parameter.ParameterParserContext) (paramete
 		return nil, parameter.NewParameterParserError(context, fmt.Sprintf("invalid parameter references: %v", err))
 	}
 
-	return &FileParameter{Fs: context.Fs, Path: strings.ToString((path)), Escaped: escaped, referencedParameters: referencedParameters}, nil
+	return &FileParameter{Fs: context.Fs, Path: strings.ToString(path), Escaped: escaped, referencedParameters: referencedParameters}, nil
 
 }
 
