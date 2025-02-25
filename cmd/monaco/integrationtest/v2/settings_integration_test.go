@@ -19,6 +19,7 @@
 package v2
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/spf13/afero"
@@ -49,12 +50,12 @@ func TestIntegrationSettings(t *testing.T) {
 
 	RunIntegrationWithCleanup(t, configFolder, manifest, specificEnvironment, "SettingsTwo", func(fs afero.Fs, _ TestContext) {
 		// This causes Creation of all Settings
-		err := monaco.RunWithFSf(fs, "monaco deploy %s --verbose", manifest)
+		err := monaco.Run(t, fs, fmt.Sprintf("monaco deploy %s --verbose", manifest))
 		assert.NoError(t, err)
 		integrationtest.AssertAllConfigsAvailability(t, fs, manifest, []string{}, specificEnvironment, true)
 
 		// This causes an Update of all Settings
-		err = monaco.RunWithFSf(fs, "monaco deploy %s --verbose", manifest)
+		err = monaco.Run(t, fs, fmt.Sprintf("monaco deploy %s --verbose", manifest))
 		assert.NoError(t, err)
 		integrationtest.AssertAllConfigsAvailability(t, fs, manifest, []string{}, specificEnvironment, true)
 	})
@@ -68,7 +69,7 @@ func TestIntegrationValidationSettings(t *testing.T) {
 	configFolder := "test-resources/integration-settings/"
 	manifest := configFolder + "manifest.yaml"
 
-	err := monaco.Runf("monaco deploy %s --verbose --dry-run", manifest)
+	err := monaco.Run(t, monaco.NewTestFs(), fmt.Sprintf("monaco deploy %s --verbose --dry-run", manifest))
 	assert.NoError(t, err)
 }
 
@@ -110,7 +111,7 @@ func TestOldExternalIDGetsUpdated(t *testing.T) {
 	}, dtclient.UpsertSettingsOptions{})
 	assert.NoError(t, err)
 
-	err = monaco.RunWithFSf(fs, "monaco deploy %s --verbose", manifestPath)
+	err = monaco.Run(t, fs, fmt.Sprintf("monaco deploy %s --verbose", manifestPath))
 	assert.NoError(t, err)
 	extID, _ := idutils.GenerateExternalIDForSettingsObject(sortedConfigs["platform_env"][0].Coordinate)
 
@@ -143,11 +144,11 @@ func TestDeploySettingsWithUniqueProperties(t *testing.T) {
 
 	RunIntegrationWithCleanup(t, configFolder, manifestPath, "", "SettingsUniqueProps", func(fs afero.Fs, _ TestContext) {
 		// create with project1 values
-		err := monaco.RunWithFSf(fs, "monaco deploy %s --environment=platform_env --project=project1", manifestPath)
+		err := monaco.Run(t, fs, fmt.Sprintf("monaco deploy %s --environment=platform_env --project=project1", manifestPath))
 		assert.NoError(t, err)
 
 		// update based on unique properties with project2 values
-		err = monaco.RunWithFSf(fs, "monaco deploy %s --environment=platform_env --project=project2", manifestPath)
+		err = monaco.Run(t, fs, fmt.Sprintf("monaco deploy %s --environment=platform_env --project=project2", manifestPath))
 		assert.NoError(t, err)
 
 		integrationtest.AssertAllConfigsAvailability(t, fs, manifestPath, []string{"project1"}, "platform_env", false) // updated to project2 externalIds
@@ -170,11 +171,11 @@ func TestDeploySettingsWithUniqueProperties_ConsidersScopes(t *testing.T) {
 
 	RunIntegrationWithCleanup(t, configFolder, manifestPath, "", "SettingsUniqueProps", func(fs afero.Fs, _ TestContext) {
 		// create with project3 values
-		err := monaco.RunWithFSf(fs, "monaco deploy %s --environment=platform_env --project=project3", manifestPath)
+		err := monaco.Run(t, fs, fmt.Sprintf("monaco deploy %s --environment=platform_env --project=project3", manifestPath))
 		assert.NoError(t, err)
 
 		// update based on unique properties with project4 values and extend by one config
-		err = monaco.RunWithFSf(fs, "monaco deploy %s --environment=platform_env --project=project4", manifestPath)
+		err = monaco.Run(t, fs, fmt.Sprintf("monaco deploy %s --environment=platform_env --project=project4", manifestPath))
 		assert.NoError(t, err)
 
 		integrationtest.AssertAllConfigsAvailability(t, fs, manifestPath, []string{"project3"}, "platform_env", false) // updated to project3 externalId
@@ -189,7 +190,7 @@ func TestOrderedSettings(t *testing.T) {
 	manifestPath := configFolder + "/manifest.yaml"
 
 	RunIntegrationWithCleanup(t, configFolder, manifestPath, "", "SettingsOrdered", func(fs afero.Fs, _ TestContext) {
-		err := monaco.RunWithFSf(fs, "monaco deploy %s --environment=platform_env --project=project", manifestPath)
+		err := monaco.Run(t, fs, fmt.Sprintf("monaco deploy %s --environment=platform_env --project=project", manifestPath))
 		assert.NoError(t, err)
 		integrationtest.AssertAllConfigsAvailability(t, fs, manifestPath, []string{"project"}, "platform_env", true)
 
@@ -208,7 +209,7 @@ func TestOrderedSettings(t *testing.T) {
 	manifestPath = configFolder + "/manifest.yaml"
 
 	RunIntegrationWithCleanup(t, configFolder, manifestPath, "", "SettingsOrdered", func(fs afero.Fs, _ TestContext) {
-		err := monaco.RunWithFSf(fs, "monaco deploy %s --environment=platform_env --project=project", manifestPath)
+		err := monaco.Run(t, fs, fmt.Sprintf("monaco deploy %s --environment=platform_env --project=project", manifestPath))
 		assert.NoError(t, err)
 		integrationtest.AssertAllConfigsAvailability(t, fs, manifestPath, []string{"project"}, "platform_env", true)
 
@@ -232,7 +233,7 @@ func TestOrderedSettingsCrossProjects(t *testing.T) {
 	manifestPath := configFolder + "/manifest.yaml"
 
 	RunIntegrationWithCleanup(t, configFolder, manifestPath, "", "SettingsOrdered", func(fs afero.Fs, _ TestContext) {
-		err := monaco.RunWithFSf(fs, "monaco deploy %s --environment=platform_env --project=source", manifestPath)
+		err := monaco.Run(t, fs, fmt.Sprintf("monaco deploy %s --environment=platform_env --project=source", manifestPath))
 		assert.NoError(t, err)
 		integrationtest.AssertAllConfigsAvailability(t, fs, manifestPath, []string{"source"}, "platform_env", true)
 
