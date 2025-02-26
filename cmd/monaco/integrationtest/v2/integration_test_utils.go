@@ -62,6 +62,20 @@ func RunIntegrationWithCleanup(t *testing.T, configFolder, manifestPath, specifi
 	runIntegration(t, opts, testFunc)
 }
 
+func RunIntegrationWithCleanupWithoutSuffixExtension(t *testing.T, configFolder, manifestPath, specificEnvironment, suffixTest string, testFunc TestFunc) {
+	opts := testOptions{
+		fs:                  testutils.CreateTestFileSystem(),
+		configFolder:        configFolder,
+		manifestPath:        manifestPath,
+		specificEnvironment: specificEnvironment,
+		suffix:              suffixTest,
+		envVars:             nil,
+		skipSuffixExtension: true,
+	}
+
+	runIntegration(t, opts, testFunc)
+}
+
 func RunIntegrationWithoutCleanup(t *testing.T, configFolder, manifestPath, specificEnvironment, suffixTest string, testFunc TestFunc) {
 	opts := testOptions{
 		fs:                  testutils.CreateTestFileSystem(),
@@ -71,6 +85,21 @@ func RunIntegrationWithoutCleanup(t *testing.T, configFolder, manifestPath, spec
 		suffix:              suffixTest,
 		envVars:             nil,
 		skipCleanup:         true,
+	}
+
+	runIntegration(t, opts, testFunc)
+}
+
+func RunIntegrationWithoutCleanupAndSuffixExtension(t *testing.T, configFolder, manifestPath, specificEnvironment, suffixTest string, testFunc TestFunc) {
+	opts := testOptions{
+		fs:                  testutils.CreateTestFileSystem(),
+		configFolder:        configFolder,
+		manifestPath:        manifestPath,
+		specificEnvironment: specificEnvironment,
+		suffix:              suffixTest,
+		envVars:             nil,
+		skipCleanup:         true,
+		skipSuffixExtension: true,
 	}
 
 	runIntegration(t, opts, testFunc)
@@ -124,12 +153,21 @@ type testOptions struct {
 	// skipCleanup skips the Monaco cleanup that generates the delete file and deletes all created resources.
 	// It is false by default, thus the cleanup must be disabled intentionally
 	skipCleanup bool
+
+	// skipSuffixExtension skips extending the suffix with a generated component.
+	// It is false by default, thus the extension must be disabled intentionally
+	skipSuffixExtension bool
 }
 
 func runIntegration(t *testing.T, opts testOptions, testFunc TestFunc) {
 	configFolder, _ := filepath.Abs(opts.configFolder)
 
-	suffix := appendUniqueSuffixToIntegrationTestConfigs(t, opts.fs, configFolder, opts.suffix)
+	suffix := opts.suffix
+	if !opts.skipSuffixExtension {
+		suffix = integrationtest.GenerateTestSuffix(t, suffix)
+	}
+
+	appendUniqueSuffixToIntegrationTestConfigs(t, opts.fs, configFolder, suffix)
 
 	for k, v := range opts.envVars {
 		setTestEnvVar(t, k.EnvName(), v, suffix)
@@ -148,8 +186,7 @@ func runIntegration(t *testing.T, opts testOptions, testFunc TestFunc) {
 	})
 }
 
-func appendUniqueSuffixToIntegrationTestConfigs(t *testing.T, fs afero.Fs, configFolder string, generalSuffix string) string {
-	suffix := integrationtest.GenerateTestSuffix(t, generalSuffix)
+func appendUniqueSuffixToIntegrationTestConfigs(t *testing.T, fs afero.Fs, configFolder string, suffix string) string {
 	transformers := []func(line string) string{
 		func(name string) string {
 			return integrationtest.ReplaceName(name, integrationtest.GetAddSuffixFunction(suffix))
